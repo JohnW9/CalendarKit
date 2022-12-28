@@ -249,6 +249,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         // Set the button's background image
         button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
         
+        button.setTitle("Test", for: .normal)
+        
         // Set the button's frame
         button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
         
