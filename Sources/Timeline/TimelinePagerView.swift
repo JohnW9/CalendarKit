@@ -385,14 +385,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
           update(descriptor: descriptor, with: editedEventView)
           delegate?.timelinePager(timelinePager: self, didUpdate: descriptor)
         }
-
-        UIView.animate(withDuration: 0.3,
-                       delay: 0,
-                       usingSpringWithDamping: 0.6,
-                       initialSpringVelocity: 5,
-                       options: [],
-                       animations: animateEventSnap,
-                       completion: completionHandler(_:))
           
           let button = UIButton()
           // Set the button's background image
@@ -405,6 +397,15 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
           
           // Add the button to the event view
           editedEventView.addSubview(button)
+
+        UIView.animate(withDuration: 0.3,
+                       delay: 0,
+                       usingSpringWithDamping: 0.6,
+                       initialSpringVelocity: 5,
+                       options: [],
+                       animations: animateEventSnap,
+                       completion: completionHandler(_:))
+          
       }
         
        
