@@ -248,6 +248,12 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         let button = UIButton()
         // Set the button's background image
         button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
+        
+        // Add the button to the event view
+        eventView.addSubview(button)
+        
+        // Set the button's frame
+        button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
 
       if animated {
         eventView.animateCreation()
