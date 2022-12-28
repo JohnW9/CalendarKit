@@ -244,19 +244,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                            width: timeline.calendarWidth,
                            height: yEnd - yStart)
       eventView.frame = newRect
-        
+        /*
         let button = UIButton()
-        // Set the button's background image
         button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
-        
         button.setTitle("Test", for: .normal)
-        
-        // Set the button's frame
         button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
-        
-        // Add the button to the event view
         eventView.addSubview(button)
-        
+        */
         print("passed by create")
 
       if animated {
@@ -387,15 +381,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
           
           let button = UIButton()
-          // Set the button's background image
           button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
-          
           button.setTitle("Test", for: .normal)
-          
-          // Set the button's frame
           button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
-          
-          // Add the button to the event view
           editedEventView.addSubview(button)
 
         UIView.animate(withDuration: 0.3,
