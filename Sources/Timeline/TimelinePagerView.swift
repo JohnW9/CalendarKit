@@ -393,8 +393,22 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                        options: [],
                        animations: animateEventSnap,
                        completion: completionHandler(_:))
+          
+          let button = UIButton()
+          // Set the button's background image
+          button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
+          
+          button.setTitle("Test", for: .normal)
+          
+          // Set the button's frame
+          button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
+          
+          // Add the button to the event view
+          editedEventView.addSubview(button)
       }
-      
+        
+       
+        
       resizeHandleTag = nil
       prevOffset = .zero
     print ("editing finished")
