@@ -397,6 +397,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
       
       resizeHandleTag = nil
       prevOffset = .zero
+    print ("editing finished")
     }
   }
 
