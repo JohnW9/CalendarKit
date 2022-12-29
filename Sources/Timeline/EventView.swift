@@ -41,6 +41,7 @@ open class EventView: UIView {
     clipsToBounds = false
     color = tintColor
     addSubview(textView)
+      addSubview(button)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
       handle.tag = idx
@@ -151,8 +152,9 @@ open class EventView: UIView {
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
       //added for button
-      button.frame = CGRect(x: 10, y: 10, width: 30, height: 30)
-      addSubview(button)
+      button.frame = CGRect(x: 10, y: 10, width: 20, height: 20)
+      //addSubview(button)
+      
     if drawsShadow {
       applySketchShadow(alpha: 0.13,
                         blur: 10)
