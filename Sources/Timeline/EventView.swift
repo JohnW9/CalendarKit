@@ -131,7 +131,7 @@ open class EventView: UIView {
         if UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft {
             return CGRect(x: bounds.minX, y: bounds.minY, width: bounds.width - 3, height: bounds.height)
         } else {
-            return CGRect(x: bounds.minX + 30, y: bounds.minY, width: bounds.width - 3, height: bounds.height)
+            return CGRect(x: bounds.minX + 50, y: bounds.minY, width: bounds.width - 3, height: bounds.height)
         }
     }()
     if frame.minY < 0 {
@@ -151,8 +151,8 @@ open class EventView: UIView {
                           size: size)
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
-      
-      button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
+      //added for button
+      button.frame = CGRect(x: 10, y: 10, width: 30, height: 30)
       addSubview(button)
     if drawsShadow {
       applySketchShadow(alpha: 0.13,
