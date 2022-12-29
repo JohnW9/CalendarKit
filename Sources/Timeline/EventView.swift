@@ -76,6 +76,7 @@ open class EventView: UIView {
     }
     drawsShadow = event.editedEvent != nil
       event.isDone = !event.isDone
+      print(event.isDone)
     setNeedsDisplay()
     setNeedsLayout()
   }
