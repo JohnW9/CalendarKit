@@ -373,11 +373,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
           delegate?.timelinePager(timelinePager: self, didUpdate: descriptor)
         }
           
-          let button = UIButton()
-          button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
-          button.setTitle("Test", for: .normal)
-          button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
-          editedEventView.addSubview(button)
 
         UIView.animate(withDuration: 0.3,
                        delay: 0,
