@@ -29,6 +29,7 @@ open class EventView: UIView {
         //button modification
         if let event = descriptor {
             event.isDone = !event.isDone
+            button.setBackgroundImage(UIImage(named:"BlueTickFilled"), for: .normal)
             print(event.isDone)
         } else {
             print("missing event descriptor")
