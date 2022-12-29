@@ -6,6 +6,9 @@ public final class Event: EventDescriptor {
   public var text = ""
   public var attributedText: NSAttributedString?
   public var lineBreakMode: NSLineBreakMode?
+    //added task state
+  public var isDone = false
+    
   public var color = SystemColors.systemBlue {
     didSet {
       updateColors()

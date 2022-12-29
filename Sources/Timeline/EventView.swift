@@ -158,7 +158,7 @@ open class EventView: UIView {
                           size: size)
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
-      //added for button
+      //added button frame
       button.frame = CGRect(x: 10, y: 10, width: 20, height: 20)
       //addSubview(button)
       
