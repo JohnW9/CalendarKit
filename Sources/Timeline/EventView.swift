@@ -16,11 +16,10 @@ open class EventView: UIView {
     return view
   }()
     
+    //added button
     public private(set) lazy var button: UIButton = {
         let button = UIButton()
         button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
-        button.setTitle("Test", for: .normal)
-        //eventView.addSubview(button)
         return button
     }()
 

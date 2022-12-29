@@ -245,13 +245,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                            height: yEnd - yStart)
       eventView.frame = newRect
         
-        let button = UIButton()
-        button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
-        button.setTitle("Test", for: .normal)
-        button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
-        eventView.addSubview(button)
-        
-        print("passed by create")
 
       if animated {
         eventView.animateCreation()
