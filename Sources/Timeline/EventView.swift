@@ -26,7 +26,13 @@ open class EventView: UIView {
     
     //button modification
     @objc func CalTaskButtonTapped() {
-        updateWithDescriptor(event: descriptor!)
+        //button modification
+        if let event = descriptor {
+            event.isDone = !event.isDone
+            print(event.isDone)
+        } else {
+            print("missing event descriptor")
+        }
     }
 
   /// Resize Handle views showing up when editing the event.
@@ -75,8 +81,6 @@ open class EventView: UIView {
       $0.isHidden = event.editedEvent == nil
     }
     drawsShadow = event.editedEvent != nil
-      event.isDone = !event.isDone
-      print(event.isDone)
     setNeedsDisplay()
     setNeedsLayout()
   }
