@@ -16,7 +16,7 @@ open class EventView: UIView {
     return view
   }()
     
-    //added button
+    //button modification
     public private(set) lazy var button: UIButton = {
         let button = UIButton()
         button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
@@ -24,9 +24,9 @@ open class EventView: UIView {
         return button
     }()
     
-    //added button action
+    //button modification
     @objc func CalTaskButtonTapped() {
-        print("Button tapped")
+        updateWithDescriptor(event: descriptor!)
     }
 
   /// Resize Handle views showing up when editing the event.
@@ -47,7 +47,7 @@ open class EventView: UIView {
     clipsToBounds = false
     color = tintColor
     addSubview(textView)
-      //add button as subView
+      //button modification
       addSubview(button)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
@@ -75,6 +75,7 @@ open class EventView: UIView {
       $0.isHidden = event.editedEvent == nil
     }
     drawsShadow = event.editedEvent != nil
+      event.isDone = !event.isDone
     setNeedsDisplay()
     setNeedsLayout()
   }

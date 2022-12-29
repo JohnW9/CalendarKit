@@ -6,7 +6,7 @@ public final class Event: EventDescriptor {
   public var text = ""
   public var attributedText: NSAttributedString?
   public var lineBreakMode: NSLineBreakMode?
-    //added task state
+    //button modification
   public var isDone = false
     
   public var color = SystemColors.systemBlue {
@@ -38,6 +38,8 @@ public final class Event: EventDescriptor {
     cloned.textColor = textColor
     cloned.userInfo = userInfo
     cloned.editedEvent = self
+      //button modification
+      cloned.isDone = isDone
     return cloned
   }
 
