@@ -15,6 +15,14 @@ open class EventView: UIView {
     view.isScrollEnabled = false
     return view
   }()
+    
+    public private(set) lazy var button: UIButton = {
+        let button = UIButton()
+        button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
+        button.setTitle("Test", for: .normal)
+        //eventView.addSubview(button)
+        return button
+    }()
 
   /// Resize Handle views showing up when editing the event.
   /// The top handle has a tag of `0` and the bottom has a tag of `1`
@@ -143,7 +151,8 @@ open class EventView: UIView {
                           size: size)
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
-    
+      
+      button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
     if drawsShadow {
       applySketchShadow(alpha: 0.13,
                         blur: 10)
