@@ -153,6 +153,7 @@ open class EventView: UIView {
                          size: size)
       
       button.frame = CGRect(x: 10, y: 10, width: 50, height: 20)
+      addSubview(button)
     if drawsShadow {
       applySketchShadow(alpha: 0.13,
                         blur: 10)
