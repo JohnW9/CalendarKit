@@ -20,7 +20,6 @@ open class EventView: UIView {
     public private(set) lazy var button: UIButton = {
         let button = UIButton()
         //button.setBackgroundImage(UIImage(named: tagToTickImage(tagName: descriptor?.color), isDone: descriptor.isDone, for: .normal))
-        print(descriptor?.color)
         button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
         return button
@@ -31,6 +30,7 @@ open class EventView: UIView {
         //button modification
         if let event = descriptor {
             event.isDone = !event.isDone
+            print(descriptor?.color)
             button.setBackgroundImage(UIImage(named:"BlueTickFilled"), for: .normal)
             print(event.isDone)
         } else {
