@@ -57,6 +57,7 @@ open class EventView: UIView {
     color = tintColor
     addSubview(textView)
       //button modification
+      print("in configure")
       addSubview(button)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
