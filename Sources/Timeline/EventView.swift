@@ -58,7 +58,7 @@ open class EventView: UIView {
     addSubview(textView)
       //button modification
       button.setBackgroundImage(UIImage(named:colorToTickImage(color: color, isDone: false)), for: .normal)
-      print(color)
+      print("color in configure: \(color)")
       addSubview(button)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
