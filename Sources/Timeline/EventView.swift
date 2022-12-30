@@ -52,7 +52,7 @@ open class EventView: UIView {
     configure()
   }
 
-  public func configure() {
+  open func configure() {
     clipsToBounds = false
     color = tintColor
     addSubview(textView)
