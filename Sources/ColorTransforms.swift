@@ -16,7 +16,7 @@ func tagToTickImage(tagName :String, isDone: Bool) -> String {
                 return K.TickEmpty.Green
             case K.TagColors.Purple:
                 return K.TickEmpty.Purple
-            case K.TagCoCClors.Red:
+            case K.TagColors.Red:
                 return K.TickEmpty.Red
             case K.TagColors.Grey:
                 return K.TickEmpty.Grey
