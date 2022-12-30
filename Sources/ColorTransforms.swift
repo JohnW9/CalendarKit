@@ -5,7 +5,7 @@
 //  Created by Jonathan Wei on 30.12.22.
 //
 
-import Foundation
+import UIKit
 
 func tagToTickImage(tagName :String, isDone: Bool) -> String {
     if isDone == false {
@@ -56,6 +56,42 @@ func tagToHex(tagName: String) -> Int {
             return K.Colors.grey
         default:
             return K.Colors.grey
+    }
+}
+
+
+//convert system color to Tick image
+func colorToTickImage(color: UIColor, isDone: Bool) -> String {
+    if isDone == false {
+        switch color {
+        case .systemBlue:
+            return K.TickEmpty.Blue
+        case .systemGreen:
+            return K.TickEmpty.Green
+        case .systemPurple:
+            return K.TickEmpty.Purple
+        case .systemRed:
+            return K.TickEmpty.Red
+        case .systemGray:
+            return K.TickEmpty.Grey
+        default:
+            return K.TickEmpty.Grey
+        }
+    }else {
+        switch color {
+            case .systemBlue:
+                    return K.TickFilled.Blue
+            case .systemGreen:
+                    return K.TickFilled.Green
+                case .systemPurple:
+                    return K.TickFilled.Purple
+                case .systemRed:
+                    return K.TickFilled.Red
+                case .systemGray:
+                    return K.TickFilled.Grey
+                default:
+                    return K.TickFilled.Grey
+        }
     }
 }
 
