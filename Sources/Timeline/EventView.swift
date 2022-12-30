@@ -30,7 +30,7 @@ open class EventView: UIView {
         //button modification
         if let event = descriptor {
             event.isDone = !event.isDone
-            print(descriptor?.color)
+            //print(descriptor?.color)
             button.setBackgroundImage(UIImage(named:"BlueTickFilled"), for: .normal)
             print(event.isDone)
         } else {
@@ -57,7 +57,7 @@ open class EventView: UIView {
     color = tintColor
     addSubview(textView)
       //button modification
-      print("in configure")
+      print(descriptor?.color)
       addSubview(button)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
