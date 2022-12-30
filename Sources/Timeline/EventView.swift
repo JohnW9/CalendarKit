@@ -31,7 +31,7 @@ open class EventView: UIView {
         if let event = descriptor {
             event.isDone = !event.isDone
             //print(descriptor?.color)
-            button.setBackgroundImage(UIImage(named:colorToTickImage(color: event.color, isDone: event.isDone)), for: .normal)
+            button.setBackgroundImage(UIImage(named:colorToTickImage(color: color, isDone: event.isDone)), for: .normal)
             print(descriptor?.color)
         } else {
             print("missing event descriptor")
