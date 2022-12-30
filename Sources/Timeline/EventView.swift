@@ -17,16 +17,14 @@ open class EventView: UIView {
   }()
     
     //button modification
-    /*
     public private(set) lazy var button: UIButton = {
         let button = UIButton()
         button.setBackgroundImage(UIImage(named: "BlueTick"), for: .normal)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
         return button
-    }()*/
+    }()
     
     //button modification
-    /*
     @objc func CalTaskButtonTapped() {
         //button modification
         if let event = descriptor {
@@ -36,7 +34,7 @@ open class EventView: UIView {
         } else {
             print("missing event descriptor")
         }
-    }*/
+    }
 
   /// Resize Handle views showing up when editing the event.
   /// The top handle has a tag of `0` and the bottom has a tag of `1`
@@ -57,7 +55,7 @@ open class EventView: UIView {
     color = tintColor
     addSubview(textView)
       //button modification
-      //addSubview(button)
+      addSubview(button)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
       handle.tag = idx
@@ -168,7 +166,7 @@ open class EventView: UIView {
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
       //added button frame
-      //button.frame = CGRect(x: 10, y: 10, width: 20, height: 20)
+      button.frame = CGRect(x: 10, y: 10, width: 20, height: 20)
       //addSubview(button)
       
     if drawsShadow {
