@@ -64,7 +64,7 @@ func tagToHex(tagName: String) -> Int {
 func colorToTickImage(color: UIColor, isDone: Bool) -> String {
     if isDone == false {
         switch color {
-        case .systemBlue:
+        case UIColor(red: 0, green: 0.45098, blue: 0.8, alpha: 1):
             return K.TickEmpty.Blue
         case .systemGreen:
             return K.TickEmpty.Green
@@ -79,7 +79,7 @@ func colorToTickImage(color: UIColor, isDone: Bool) -> String {
         }
     }else {
         switch color {
-            case .systemBlue:
+        case UIColor(red: 0, green: 0.45098, blue: 0.8, alpha: 1):
                     return K.TickFilled.Blue
             case .systemGreen:
                     return K.TickFilled.Green
