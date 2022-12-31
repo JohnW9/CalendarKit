@@ -7,6 +7,7 @@ public final class Event: EventDescriptor {
   public var attributedText: NSAttributedString?
   public var lineBreakMode: NSLineBreakMode?
     //button modification
+  public var colorTag = K.TagColors.Grey
   public var isDone = false
     
   public var color = SystemColors.systemBlue {

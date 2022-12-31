@@ -31,7 +31,7 @@ open class EventView: UIView {
         if let event = descriptor {
             event.isDone = !event.isDone
             //print(descriptor?.color)
-            button.setBackgroundImage(UIImage(named:colorToTickImage(color: color, isDone: event.isDone)), for: .normal)
+            button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: event.isDone)), for: .normal)
             print(color)
         } else {
             print("missing event descriptor")
@@ -57,8 +57,8 @@ open class EventView: UIView {
     color = tintColor
     addSubview(textView)
       //button modification
-      button.setBackgroundImage(UIImage(named:colorToTickImage(color: color, isDone: false)), for: .normal)
-      print("color in configure: \(color)")
+      button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: false)), for: .normal)
+      print("color in configure: \(descriptor?.colorTag)")
       addSubview(button)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
