@@ -3,6 +3,8 @@ import UIKit
 open class EventView: UIView {
   public var descriptor: EventDescriptor?
   public var color = SystemColors.label
+  // button modification
+  //public var colorTag: String
 
   public var contentHeight: CGFloat {
     textView.frame.height
