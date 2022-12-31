@@ -32,7 +32,7 @@ open class EventView: UIView {
             event.isDone = !event.isDone
             //print(descriptor?.color)
             button.setBackgroundImage(UIImage(named:colorToTickImage(color: color, isDone: event.isDone)), for: .normal)
-            print(descriptor?.color)
+            print(color)
         } else {
             print("missing event descriptor")
         }
