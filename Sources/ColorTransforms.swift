@@ -80,7 +80,7 @@ func colorToTickImage(color: UIColor, isDone: Bool) -> String {
         }
     }else {
         switch color {
-        case UIColor(red: 0, green: 0.45098, blue: 0.8, alpha: 1):
+        case UIColor(red: 0, green: 0.4784, blue: 1, alpha: 1):
                     return K.TickFilled.Blue
             case .systemGreen:
                     return K.TickFilled.Green
