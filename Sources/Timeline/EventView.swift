@@ -59,7 +59,7 @@ open class EventView: UIView {
     color = tintColor
     addSubview(textView)
       //button modification
-      //button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: false)), for: .normal)
+      
       print("color in configure: \(tintColor)")
       addSubview(button)
     
@@ -83,6 +83,9 @@ open class EventView: UIView {
     descriptor = event
     backgroundColor = event.backgroundColor
     color = event.color
+      
+      //button modification
+      button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: false)), for: .normal)
     eventResizeHandles.forEach{
       $0.borderColor = event.color
       $0.isHidden = event.editedEvent == nil
