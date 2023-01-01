@@ -88,6 +88,7 @@ open class EventView: UIView {
       $0.isHidden = event.editedEvent == nil
     }
     drawsShadow = event.editedEvent != nil
+      print("updateWithDescriptor")
     setNeedsDisplay()
     setNeedsLayout()
   }
