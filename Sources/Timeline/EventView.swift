@@ -1,4 +1,5 @@
 import UIKit
+import AudioToolbox
 
 open class EventView: UIView {
   public var descriptor: EventDescriptor?
@@ -34,7 +35,7 @@ open class EventView: UIView {
             event.isDone = !event.isDone
             //print(descriptor?.color)
             button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: event.isDone)), for: .normal)
-            print(color)
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         } else {
             print("missing event descriptor")
         }
