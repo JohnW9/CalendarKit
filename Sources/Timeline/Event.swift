@@ -100,7 +100,7 @@ public final class Event: EventDescriptor {
         let interfaceStyle = traitCollection.userInterfaceStyle
         switch interfaceStyle {
         case .dark:
-          return dark
+          return light
         default:
           return light
         }

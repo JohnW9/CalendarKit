@@ -5,7 +5,7 @@ open class EventView: UIView {
   public var color = SystemColors.label
   // button modification
   //public var colorTag: String
-    private let impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
+    private let impactGenerator = UIImpactFeedbackGenerator(style: .light)
 
   public var contentHeight: CGFloat {
     textView.frame.height
