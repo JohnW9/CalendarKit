@@ -6,6 +6,7 @@ open class EventView: UIView {
   public var color = SystemColors.label
   // button modification
   //public var colorTag: String
+    private let impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
 
   public var contentHeight: CGFloat {
     textView.frame.height
@@ -35,7 +36,7 @@ open class EventView: UIView {
             event.isDone = !event.isDone
             //print(descriptor?.color)
             button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: event.isDone)), for: .normal)
-            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+            impactGenerator.impactOccurred()
         } else {
             print("missing event descriptor")
         }
