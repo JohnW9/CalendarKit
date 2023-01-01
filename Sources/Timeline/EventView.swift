@@ -1,5 +1,4 @@
 import UIKit
-import AudioToolbox
 
 open class EventView: UIView {
   public var descriptor: EventDescriptor?
