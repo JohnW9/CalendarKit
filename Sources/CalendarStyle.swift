@@ -84,7 +84,7 @@ public struct CurrentTimeIndicatorStyle {
 }
 
 public struct AllDayViewStyle {
-  public var backgroundColor: UIColor = SystemColors.white
+    public var backgroundColor: UIColor = SystemColors.systemBlue
   public var allDayFont = UIFont.systemFont(ofSize: 12.0)
   public var allDayColor: UIColor = SystemColors.label
   public init() {}
