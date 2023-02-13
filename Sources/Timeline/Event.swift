@@ -9,6 +9,7 @@ public final class Event: EventDescriptor {
     //button modification
   public var colorTag = K.TagColors.Grey
   public var isDone = false
+    public var id = -1 //the id is used to identify the task in C.calTaskList. It is the ith element in the C.calTaskList array
     
   public var color = SystemColors.systemBlue {
     didSet {
@@ -41,6 +42,7 @@ public final class Event: EventDescriptor {
     cloned.editedEvent = self
       //button modification
       cloned.isDone = isDone
+      cloned.id = id
     return cloned
   }
 

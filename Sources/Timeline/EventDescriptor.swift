@@ -15,6 +15,7 @@ public protocol EventDescriptor: AnyObject {
   var backgroundColor: UIColor {get}
     //button modification
     var isDone: Bool {get set}
+    var id: Int {get set}
   var editedEvent: EventDescriptor? {get set}
   func makeEditable() -> Self
   func commitEditing()
