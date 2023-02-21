@@ -32,7 +32,7 @@ open class EventView: UIView {
     //used to make the clickable area bigger
    public class LargerButtonArea: UIButton {
         public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-            return bounds.insetBy(dx: -15, dy: -15).contains(point)
+            return bounds.insetBy(dx: -10, dy: -10).contains(point)
         }
     }
     
