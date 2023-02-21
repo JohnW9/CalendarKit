@@ -29,6 +29,13 @@ open class EventView: UIView {
         return button
     }()
     
+    
+   public class CustomButton: UIButton {
+        public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+            return bounds.insetBy(dx: -10, dy: -10).contains(point)
+        }
+    }
+    
     @IBDesignable
     public class GRCustomButton: UIButton {
 
@@ -39,13 +46,6 @@ open class EventView: UIView {
             let area = self.bounds.insetBy(dx: -margin, dy: -margin)
             return area.contains(point)
         }
-        
-       public class CustomButton: UIButton {
-            public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-                return bounds.insetBy(dx: -10, dy: -10).contains(point)
-            }
-        }
-
     }
     
     //button modification
