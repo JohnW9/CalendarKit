@@ -20,19 +20,26 @@ open class EventView: UIView {
   }()
     
     //button modification
-    public private(set) lazy var button: CustomButton = {
+    public private(set) lazy var button: GRCustomButton = {
         let button = UIButton()
         //button.setBackgroundImage(UIImage(named: tagToTickImage(tagName: descriptor?.color), isDone: descriptor.isDone, for: .normal))
         //button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
-        return button as! EventView.CustomButton
+        return button as! EventView.GRCustomButton
     }()
     
-   public class CustomButton: UIButton {
-       public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-            return bounds.insetBy(dx: -30, dy: -30).contains(point)
+    @IBDesignable
+    public class GRCustomButton: UIButton {
+
+        @IBInspectable var margin:CGFloat = 20.0
+        public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+            //increase touch area for control in all directions by 20
+
+            let area = self.bounds.insetBy(dx: -margin, dy: -margin)
+            return area.contains(point)
         }
+
     }
     
     //button modification
