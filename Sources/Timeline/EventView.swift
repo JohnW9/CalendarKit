@@ -20,22 +20,23 @@ open class EventView: UIView {
   }()
     
     //button modification
-    public private(set) lazy var button: CustomButton = {
-        let button = CustomButton()
+    public private(set) lazy var button: LargerButtonArea = {
+        let button = LargerButtonArea()
         //button.setBackgroundImage(UIImage(named: tagToTickImage(tagName: descriptor?.color), isDone: descriptor.isDone, for: .normal))
         //button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
         return button
     }()
-    
-    
-   public class CustomButton: UIButton {
+    //button modification
+    //used to make the clickable area bigger
+   public class LargerButtonArea: UIButton {
         public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-            return bounds.insetBy(dx: -10, dy: -10).contains(point)
+            return bounds.insetBy(dx: -15, dy: -15).contains(point)
         }
     }
     
+    /*
     @IBDesignable
     public class GRCustomButton: UIButton {
 
@@ -46,7 +47,7 @@ open class EventView: UIView {
             let area = self.bounds.insetBy(dx: -margin, dy: -margin)
             return area.contains(point)
         }
-    }
+    }*/
     
     //button modification
     @objc func CalTaskButtonTapped() {
