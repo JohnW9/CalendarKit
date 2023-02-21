@@ -21,12 +21,12 @@ open class EventView: UIView {
     
     //button modification
     public private(set) lazy var button: GRCustomButton = {
-        let button = UIButton()
+        let button = GRCustomButton()
         //button.setBackgroundImage(UIImage(named: tagToTickImage(tagName: descriptor?.color), isDone: descriptor.isDone, for: .normal))
         //button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
-        return button as! EventView.GRCustomButton
+        return button
     }()
     
     @IBDesignable
