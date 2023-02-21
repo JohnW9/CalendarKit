@@ -24,10 +24,15 @@ open class EventView: UIView {
         let button = UIButton()
         //button.setBackgroundImage(UIImage(named: tagToTickImage(tagName: descriptor?.color), isDone: descriptor.isDone, for: .normal))
         //button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
-        button.contentEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
+        //button.contentEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
         return button
     }()
+    open override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+       let biggerFrame = bounds.insetBy(dx: -30, dy: -30)
+
+       return biggerFrame.contains(point)
+    }
     
     //button modification
     @objc func CalTaskButtonTapped() {
