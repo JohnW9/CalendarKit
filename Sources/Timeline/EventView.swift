@@ -20,8 +20,8 @@ open class EventView: UIView {
   }()
     
     //button modification
-    public private(set) lazy var button: GRCustomButton = {
-        let button = GRCustomButton()
+    public private(set) lazy var button: CustomButton = {
+        let button = CustomButton()
         //button.setBackgroundImage(UIImage(named: tagToTickImage(tagName: descriptor?.color), isDone: descriptor.isDone, for: .normal))
         //button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
@@ -38,6 +38,12 @@ open class EventView: UIView {
 
             let area = self.bounds.insetBy(dx: -margin, dy: -margin)
             return area.contains(point)
+        }
+        
+       public class CustomButton: UIButton {
+            public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+                return bounds.insetBy(dx: -10, dy: -10).contains(point)
+            }
         }
 
     }
