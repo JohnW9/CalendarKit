@@ -26,11 +26,11 @@ open class EventView: UIView {
         //button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
-        return button
+        return button as! EventView.CustomButton
     }()
     
-    class CustomButton: UIButton {
-        override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+   public class CustomButton: UIButton {
+       public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
             return bounds.insetBy(dx: -30, dy: -30).contains(point)
         }
     }
