@@ -20,18 +20,19 @@ open class EventView: UIView {
   }()
     
     //button modification
-    public private(set) lazy var button: UIButton = {
+    public private(set) lazy var button: CustomButton = {
         let button = UIButton()
         //button.setBackgroundImage(UIImage(named: tagToTickImage(tagName: descriptor?.color), isDone: descriptor.isDone, for: .normal))
         //button.setBackgroundImage(UIImage(named:"BlueTick"), for: .normal)
-        //button.contentEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
+        button.imageEdgeInsets = UIEdgeInsets(top: 100, left: 100, bottom: 100, right: 100)
         button.addTarget(self, action: #selector(CalTaskButtonTapped), for: .touchUpInside)
         return button
     }()
-    open override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-       let biggerFrame = bounds.insetBy(dx: -30, dy: -30)
-
-       return biggerFrame.contains(point)
+    
+    class CustomButton: UIButton {
+        override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+            return bounds.insetBy(dx: -30, dy: -30).contains(point)
+        }
     }
     
     //button modification
