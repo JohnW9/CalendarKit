@@ -197,7 +197,7 @@ open class EventView: UIView {
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
       //added button frame
-      button.frame = CGRect(x: 10, y: 10, width: 20, height: 20)
+      button.frame = CGRect(x: 10, y: self.frame.height / 2, width: 20, height: 20)
       //addSubview(button)
       
     if drawsShadow {
