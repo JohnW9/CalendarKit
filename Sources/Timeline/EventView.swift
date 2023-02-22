@@ -197,13 +197,13 @@ open class EventView: UIView {
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
       //added button frame
+      //and button positioning depending of frame (task) size (duration)
     var buttonHeight : CGFloat
       if self.frame.height >= 50 {
           buttonHeight = 10
       } else {
           buttonHeight = 0.3*self.frame.height-5
       }
-      print("frame height \(self.frame.height)")
       button.frame = CGRect(x: 10, y: buttonHeight, width: 20, height: 20)
       //addSubview(button)
       
