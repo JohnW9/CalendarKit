@@ -198,10 +198,10 @@ open class EventView: UIView {
                          size: size)
       //added button frame
     var buttonHeight : CGFloat
-      if self.frame.height > 50 {
+      if self.frame.height >= 50 {
           buttonHeight = 10
       } else {
-          buttonHeight = 20 - self.frame.height
+          buttonHeight = 0.3*self.frame.height-5
       }
       print("frame height \(self.frame.height)")
       button.frame = CGRect(x: 10, y: buttonHeight, width: 20, height: 20)
