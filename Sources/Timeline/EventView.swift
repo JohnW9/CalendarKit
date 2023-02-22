@@ -203,6 +203,7 @@ open class EventView: UIView {
       } else {
           buttonHeight = 20 - self.frame.height
       }
+      print("frame height \(self.frame.height)")
       button.frame = CGRect(x: 10, y: buttonHeight, width: 20, height: 20)
       //addSubview(button)
       
