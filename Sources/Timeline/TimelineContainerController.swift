@@ -11,8 +11,14 @@ public final class TimelineContainerController: UIViewController {
     return view
   }()
   
+  /// Stacks the all-day events above the scrolling timeline, so they push the hours down instead of covering them.
+  /// The all-day view is hidden on days without all-day events, which collapses its row in the stack view
   public override func loadView() {
-    view = container
+    let allDayView = timeline.allDayView
+    let stackView = UIStackView(arrangedSubviews: [allDayView, container])
+    stackView.axis = .vertical
+    stackView.clipsToBounds = true
+    view = stackView
   }
   
   public override func viewDidLayoutSubviews() {

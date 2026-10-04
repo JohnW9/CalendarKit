@@ -16,19 +16,16 @@ public final class TimelineContainer: UIScrollView {
   override public func layoutSubviews() {
     super.layoutSubviews()
     timeline.frame = CGRect(x: 0, y: 0, width: bounds.width, height: timeline.fullHeight)
-    timeline.offsetAllDayView(by: contentOffset.y)
-    
-    
-    //adjust the scroll insets
-    let allDayViewHeight = timeline.allDayViewHeight
+
+    //adjust the scroll insets, the all-day events sit above the container so they need no inset
     let bottomSafeInset: CGFloat
     if #available(iOS 11.0, *) {
       bottomSafeInset = window?.safeAreaInsets.bottom ?? 0
     } else {
       bottomSafeInset = 0
     }
-    scrollIndicatorInsets = UIEdgeInsets(top: allDayViewHeight, left: 0, bottom: bottomSafeInset, right: 0)
-    contentInset = UIEdgeInsets(top: allDayViewHeight, left: 0, bottom: bottomSafeInset, right: 0)
+    scrollIndicatorInsets = UIEdgeInsets(top: 0, left: 0, bottom: bottomSafeInset, right: 0)
+    contentInset = UIEdgeInsets(top: 0, left: 0, bottom: bottomSafeInset, right: 0)
   }
   
   public func prepareForReuse() {
@@ -36,8 +33,7 @@ public final class TimelineContainer: UIScrollView {
   }
   
   public func scrollToFirstEvent(animated: Bool) {
-    let allDayViewHeight = timeline.allDayViewHeight
-    let padding = allDayViewHeight + 8
+    let padding: CGFloat = 8
     if let yToScroll = timeline.firstEventYPosition {
       setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
     }

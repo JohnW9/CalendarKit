@@ -63,25 +63,20 @@ public final class TimelineView: UIView {
 
   private lazy var nowLine: CurrentTimeIndicator = CurrentTimeIndicator()
   
-  private var allDayViewTopConstraint: NSLayoutConstraint?
-  private lazy var allDayView: AllDayView = {
+  /// Shows the all-day events. It is not a subview of the timeline: the TimelineContainerController places it
+  /// above the scrolling timeline, so it pushes the hours down instead of covering them
+  public private(set) lazy var allDayView: AllDayView = {
     let allDayView = AllDayView(frame: CGRect.zero)
-    
     allDayView.translatesAutoresizingMaskIntoConstraints = false
-    addSubview(allDayView)
-
-    allDayViewTopConstraint = allDayView.topAnchor.constraint(equalTo: topAnchor, constant: 0)
-    allDayViewTopConstraint?.isActive = true
-
-    allDayView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0).isActive = true
-    allDayView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0).isActive = true
-
+    allDayView.addGestureRecognizer(allDayTapGestureRecognizer)
+    allDayView.addGestureRecognizer(allDayLongPressGestureRecognizer)
     return allDayView
   }()
-  
-  var allDayViewHeight: CGFloat {
-    allDayView.bounds.height
-  }
+
+  private lazy var allDayTapGestureRecognizer = UITapGestureRecognizer(target: self,
+                                                                       action: #selector(allDayTap(_:)))
+  private lazy var allDayLongPressGestureRecognizer = UILongPressGestureRecognizer(target: self,
+                                                                                   action: #selector(allDayLongPress(_:)))
 
   var style = TimelineStyle()
   private var horizontalEventInset: CGFloat = 3
@@ -191,14 +186,19 @@ public final class TimelineView: UIView {
     }
   }
   
-  private func findEventView(at point: CGPoint) -> EventView? {
-    for eventView in allDayView.eventViews {
-      let frame = eventView.convert(eventView.bounds, to: self)
-      if frame.contains(point) {
-        return eventView
-      }
+  @objc private func allDayTap(_ sender: UITapGestureRecognizer) {
+    if let eventView = findAllDayEventView(at: sender.location(in: allDayView)) {
+      delegate?.timelineView(self, didTap: eventView)
     }
+  }
 
+  @objc private func allDayLongPress(_ sender: UILongPressGestureRecognizer) {
+    if sender.state == .began, let eventView = findAllDayEventView(at: sender.location(in: allDayView)) {
+      delegate?.timelineView(self, didLongPress: eventView)
+    }
+  }
+
+  private func findEventView(at point: CGPoint) -> EventView? {
     for eventView in eventViews {
       let frame = eventView.frame
       if frame.contains(point) {
@@ -207,23 +207,10 @@ public final class TimelineView: UIView {
     }
     return nil
   }
-  
-  
-  /**
-   Custom implementation of the hitTest method is needed for the tap gesture recognizers
-   located in the AllDayView to work.
-   Since the AllDayView could be outside of the Timeline's bounds, the touches to the EventViews
-   are ignored.
-   In the custom implementation the method is recursively invoked for all of the subviews,
-   regardless of their position in relation to the Timeline's bounds.
-   */
-  public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-    for subview in allDayView.subviews {
-      if let subSubView = subview.hitTest(convert(point, to: subview), with: event) {
-        return subSubView
-      }
-    }
-    return super.hitTest(point, with: event)
+
+  /// - Parameter point: location in the allDayView's coordinates
+  private func findAllDayEventView(at point: CGPoint) -> EventView? {
+    allDayView.eventViews.first { $0.convert($0.bounds, to: allDayView).contains(point) }
   }
   
   // MARK: - Style
@@ -249,6 +236,13 @@ public final class TimelineView: UIView {
   // MARK: - Background Pattern
 
   public var accentedDate: Date?
+
+  /// Event hidden from the timeline, used while its editable copy is being dragged so it doesn't appear twice
+  public var hiddenEvent: EventDescriptor? {
+    didSet {
+      setNeedsLayout()
+    }
+  }
 
   override public func draw(_ rect: CGRect) {
     super.draw(rect)
@@ -374,7 +368,6 @@ public final class TimelineView: UIView {
     recalculateEventLayout()
     layoutEvents()
     layoutNowLine()
-    layoutAllDayEvents()
   }
 
   private func layoutNowLine() {
@@ -406,32 +399,16 @@ public final class TimelineView: UIView {
         x = attributes.frame.minX
       }
         
-      eventView.frame = CGRect(x: x,
+      eventView.frame = CGRect(x: x + style.eventHorizontalInset,
                                y: attributes.frame.minY,
-                               width: attributes.frame.width - style.eventGap,
+                               width: attributes.frame.width - 2 * style.eventHorizontalInset,
                                height: attributes.frame.height - style.eventGap)
       eventView.updateWithDescriptor(event: descriptor)
+      // set on every layout, as event views are reused from a pool
+      eventView.isHidden = hiddenEvent.map { $0 === descriptor } ?? false
     }
   }
   
-  private func layoutAllDayEvents() {
-    //add day view needs to be in front of the nowLine
-    bringSubviewToFront(allDayView)
-  }
-  
-  /**
-   This will keep the allDayView as a stationary view in its superview
-   
-   - parameter yValue: since the superview is a scrollView, `yValue` is the
-   `contentOffset.y` of the scroll view
-   */
-  public func offsetAllDayView(by yValue: CGFloat) {
-    if let topConstraint = self.allDayViewTopConstraint {
-      topConstraint.constant = yValue
-      layoutIfNeeded()
-    }
-  }
-
   private func recalculateEventLayout() {
 
     // only non allDay events need their frames to be set
@@ -450,16 +427,6 @@ public final class TimelineView: UIView {
         continue
       }
 
-      let longestEvent = overlappingEvents.sorted { (attr1, attr2) -> Bool in
-        var period = attr1.descriptor.dateInterval
-        let period1 = period.end.timeIntervalSince(period.start)
-        period = attr2.descriptor.dateInterval
-        let period2 = period.end.timeIntervalSince(period.start)
-
-        return period1 > period2
-        }
-        .first!
-
       if style.eventsWillOverlap {
         guard let earliestEvent = overlappingEvents.first?.descriptor.dateInterval.start else { continue }
         let dateInterval = getDateInterval(date: earliestEvent)
@@ -468,9 +435,10 @@ public final class TimelineView: UIView {
           continue
         }
       } else {
-        let lastEvent = overlappingEvents.last!
-        if (longestEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (longestEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) ||
-          (lastEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (lastEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) {
+        // Events only overlap if one starts strictly before another ends;
+        // back-to-back events (e.g. 12–13 and 13–14) keep the full width
+        let groupEnd = overlappingEvents.map { $0.descriptor.dateInterval.end }.max()!
+        if event.descriptor.dateInterval.start < groupEnd {
           overlappingEvents.append(event)
           continue
         }

@@ -117,7 +117,7 @@ import UIKit
             x = leadingInset - padding
         }
         
-        return CGRect(x: x, y: bounds.height / 2, width: bounds.width - leadingInset, height: 1)
+        return CGRect(x: x, y: (bounds.height - style.lineWidth) / 2, width: bounds.width - leadingInset, height: style.lineWidth)
     }()
 
     circle.frame = {
@@ -141,7 +141,8 @@ import UIKit
     timeLabel.font = style.font
     circle.backgroundColor = style.color
     line.backgroundColor = style.color
-    
+    setNeedsLayout()
+
     switch style.dateStyle {
     case .twelveHour:
         is24hClock = false

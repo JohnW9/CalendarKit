@@ -15,6 +15,8 @@ public protocol EventDescriptor: AnyObject {
   var backgroundColor: UIColor {get}
     //button modification
     var isDone: Bool {get set}
+    var isTickable: Bool {get set} //false for events that are shown without a tick box (e.g. imported from Apple Calendar)
+    var showsStripe: Bool {get set} //false hides the color stripe along the leading edge (e.g. imported from Apple Calendar)
     var id: Int {get set}
   var editedEvent: EventDescriptor? {get set}
   func makeEditable() -> Self

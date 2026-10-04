@@ -7,8 +7,10 @@ public final class Event: EventDescriptor {
   public var attributedText: NSAttributedString?
   public var lineBreakMode: NSLineBreakMode?
     //button modification
-  public var colorTag = K.TagColors.Grey
+  public var colorTag = K.TagColors.Default
   public var isDone = false
+  public var isTickable = true //false hides the tick box, for events that are not tasks (e.g. imported from Apple Calendar)
+  public var showsStripe = true //false hides the color stripe along the leading edge (e.g. imported from Apple Calendar)
     public var id = -1 //the id is used to identify the task in C.calTaskList. It is the ith element in the C.calTaskList array
     
   public var color = SystemColors.systemBlue {
@@ -18,7 +20,7 @@ public final class Event: EventDescriptor {
   }
   public var backgroundColor = SystemColors.systemBlue.withAlphaComponent(0.3)
   public var textColor = SystemColors.label
-  public var font = UIFont.boldSystemFont(ofSize: 12)
+  public var font = UIFont.boldSystemFont(ofSize: 13.5)
   public var userInfo: Any?
   public weak var editedEvent: EventDescriptor? {
     didSet {
@@ -42,6 +44,9 @@ public final class Event: EventDescriptor {
     cloned.editedEvent = self
       //button modification
       cloned.isDone = isDone
+      cloned.isTickable = isTickable
+      cloned.showsStripe = showsStripe
+      cloned.colorTag = colorTag //keeps the tick box color while the event is selected/edited
       cloned.id = id
     return cloned
   }

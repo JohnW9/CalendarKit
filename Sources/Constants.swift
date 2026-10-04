@@ -21,7 +21,7 @@ struct K {
         static let Blue = "Blue"
         static let Green = "Green"
         static let Red = "Red"
-        static let Grey = "Grey"
+        static let Default = Blue //tag of new tasks and events
     }
 
     struct TickEmpty { //corresponds to the empty tick boxes
@@ -29,7 +29,6 @@ struct K {
         static let Blue = "BlueTick"
         static let Green = "GreenTick"
         static let Red = "RedTick"
-        static let Grey = "GreyTick"
     }
     
     struct TickFilled { //corresponds to the filled tick boxes
@@ -37,17 +36,17 @@ struct K {
         static let Blue = "BlueTickFilled"
         static let Green = "GreenTickFilled"
         static let Red = "RedTickFilled"
-        static let Grey = "GreyTickFilled"
     }
+    //tag colors use Apple's system colors (light appearance), the tick and circle images use the same values
     struct Colors {
         static let lightBlue = 0xC0E6FF
-        static let blue = 0x0073CC
+        static let blue = 0x007AFF //systemBlue
         static let lightPurple = 0xEAC9F7
-        static let purple = 0x8E008B
+        static let purple = 0xAF52DE //systemPurple
         static let lightRed = 0xFFC5B8
-        static let red = 0xE23424
-        static let green = 0x2A9D8F
-        static let grey = 0xBDC3C7
+        static let red = 0xFF3B30 //systemRed
+        static let green = 0x34C759 //systemGreen
+        static let lightGrey = 0xC7C7CC //systemGray3, events imported from Apple Calendar
     }
 }
 

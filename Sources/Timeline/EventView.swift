@@ -1,21 +1,50 @@
 import UIKit
 
 open class EventView: UIView {
+  /// Posted when the tick box of an event is tapped, the notification's object is the event's descriptor
+  public static let didToggleDoneNotification = Notification.Name("EventViewDidToggleDone")
+
   public var descriptor: EventDescriptor?
   public var color = SystemColors.label
+  /// Fill color of the event, drawn as a rounded rect in draw(_:) instead of using the view's backgroundColor
+  private var fillColor: UIColor = .clear
   // button modification
   //public var colorTag: String
     private let impactGenerator = UIImpactFeedbackGenerator(style: .light)
+    // double "success" vibration when a task is ticked off, like a completed Apple Pay payment
+    private let notificationGenerator = UINotificationFeedbackGenerator()
+
+  /// Line drawn over the text when the task is done, animated from left to right when ticking
+  private lazy var strikethroughLayer: CAShapeLayer = {
+    let layer = CAShapeLayer()
+    layer.fillColor = nil
+    layer.lineWidth = 1.5
+    layer.lineCap = .round
+    layer.strokeEnd = 0
+    return layer
+  }()
+  private let strikethroughAnimationKey = "strikethrough"
 
   public var contentHeight: CGFloat {
     textView.frame.height
   }
 
   public private(set) lazy var textView: UITextView = {
-    let view = UITextView()
+    // Built on TextKit 1 from the start: the strikethrough reads the layoutManager, which would otherwise
+    // force every text view to switch from TextKit 2 to TextKit 1 at runtime (slow, especially the first time)
+    let textStorage = NSTextStorage()
+    let layoutManager = NSLayoutManager()
+    textStorage.addLayoutManager(layoutManager)
+    let textContainer = NSTextContainer(size: .zero)
+    textContainer.widthTracksTextView = true
+    layoutManager.addTextContainer(textContainer)
+    let view = UITextView(frame: .zero, textContainer: textContainer)
     view.isUserInteractionEnabled = false
     view.backgroundColor = .clear
     view.isScrollEnabled = false
+    // Remove the default padding so the text can be positioned precisely next to the tick button
+    view.textContainerInset = .zero
+    view.textContainer.lineFragmentPadding = 0
     return view
   }()
     
@@ -56,10 +85,85 @@ open class EventView: UIView {
             event.isDone = !event.isDone
             //print(descriptor?.color)
             button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: event.isDone)), for: .normal)
-            impactGenerator.impactOccurred()
+            if event.isDone {
+                notificationGenerator.notificationOccurred(.success)
+            } else {
+                impactGenerator.impactOccurred()
+            }
+            setStrikethrough(visible: event.isDone, animated: true)
+            //lets the app react to the tick (e.g. adding the task to the logbook)
+            NotificationCenter.default.post(name: EventView.didToggleDoneNotification, object: event)
         } else {
             print("missing event descriptor")
         }
+    }
+
+    /// Shows or hides the strikethrough line. When animated, the line is drawn from left to right
+    /// (and retracted from right to left when un-ticking)
+    private func setStrikethrough(visible: Bool, animated: Bool) {
+        let target: CGFloat = visible ? 1 : 0
+        guard animated else {
+            // don't interrupt a running animation that already heads to the same state
+            if strikethroughLayer.strokeEnd != target {
+                strikethroughLayer.removeAnimation(forKey: strikethroughAnimationKey)
+                CATransaction.begin()
+                CATransaction.setDisableActions(true)
+                strikethroughLayer.strokeEnd = target
+                CATransaction.commit()
+            }
+            return
+        }
+        // start from the currently displayed value so quick double taps don't jump
+        let current = strikethroughLayer.presentation()?.strokeEnd ?? strikethroughLayer.strokeEnd
+        let animation = CABasicAnimation(keyPath: "strokeEnd")
+        animation.fromValue = current
+        animation.toValue = target
+        animation.duration = 0.35 * abs(Double(target - current))
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        strikethroughLayer.strokeEnd = target
+        CATransaction.commit()
+        strikethroughLayer.add(animation, forKey: strikethroughAnimationKey)
+    }
+
+    /// Builds one horizontal line per visible line of text, in reading order,
+    /// so animating strokeEnd draws through them one after another
+    private func updateStrikethroughPath() {
+        let layoutManager = textView.layoutManager
+        let textContainer = textView.textContainer
+        layoutManager.ensureLayout(for: textContainer)
+        let font = textView.font ?? UIFont.systemFont(ofSize: 12)
+        let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
+        let text = textView.text as NSString? ?? ""
+        let path = UIBezierPath()
+        let glyphRange = layoutManager.glyphRange(for: textContainer)
+        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { rect, _, _, lineGlyphRange, _ in
+            // skip lines that are only whitespace / newlines
+            let charRange = layoutManager.characterRange(forGlyphRange: lineGlyphRange, actualGlyphRange: nil)
+            let lineText = text.substring(with: charRange).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !lineText.isEmpty else { return }
+            // measure only the visible characters, excluding trailing whitespace
+            let trimmedEnd = charRange.location + (text.substring(with: charRange) as NSString)
+                .range(of: lineText, options: .backwards).upperBound
+            let trimmedRange = NSRange(location: charRange.location, length: trimmedEnd - charRange.location)
+            let trimmedGlyphs = layoutManager.glyphRange(forCharacterRange: trimmedRange, actualCharacterRange: nil)
+            let usedRect = layoutManager.boundingRect(forGlyphRange: trimmedGlyphs, in: textContainer)
+            let baseline = rect.minY + layoutManager.location(forGlyphAt: lineGlyphRange.location).y
+            let y = baseline - font.xHeight / 2
+            // ignore lines that are cut off by the bottom of the event
+            guard y < self.textView.bounds.height else { return }
+            let startX = rightToLeft ? usedRect.maxX : usedRect.minX
+            let endX = rightToLeft ? usedRect.minX : usedRect.maxX
+            path.move(to: CGPoint(x: startX, y: y))
+            path.addLine(to: CGPoint(x: endX, y: y))
+        }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        strikethroughLayer.frame = textView.bounds
+        strikethroughLayer.path = path.cgPath
+        strikethroughLayer.strokeColor = (textView.textColor ?? SystemColors.label).cgColor
+        CATransaction.commit()
     }
 
   /// Resize Handle views showing up when editing the event.
@@ -76,10 +180,36 @@ open class EventView: UIView {
     configure()
   }
 
+  /// Corner radius applied to the event's background and left color stripe
+  public var cornerRadius: CGFloat = 10 {
+    didSet {
+      layer.cornerRadius = cornerRadius
+      setNeedsDisplay()
+    }
+  }
+
+  /// Width of the color stripe along the event's leading edge
+  public var stripeWidth: CGFloat = 6 {
+    didSet {
+      setNeedsDisplay()
+    }
+  }
+
+  /// Width actually used by the stripe, zero when the event hides it
+  private var visibleStripeWidth: CGFloat {
+    (descriptor?.showsStripe ?? true) ? stripeWidth : 0
+  }
+
   open func configure() {
     clipsToBounds = false
+    isOpaque = false
+    backgroundColor = .clear
+    contentMode = .redraw // redraw on resize so the rounded corners don't get stretched
+    layer.cornerRadius = cornerRadius
+    layer.cornerCurve = .continuous
     color = tintColor
     addSubview(textView)
+    textView.layer.addSublayer(strikethroughLayer)
       //button modification
       addSubview(button)
     
@@ -101,11 +231,15 @@ open class EventView: UIView {
       textView.textContainer.lineBreakMode = lineBreakMode
     }
     descriptor = event
-    backgroundColor = event.backgroundColor
+    // The view's own backgroundColor is filled as a square, since clipsToBounds is off,
+    // so the rounded background is drawn in draw(_:) instead
+    fillColor = event.backgroundColor
     color = event.color
       
       //button modification
       button.setBackgroundImage(UIImage(named:tagToTickImage(tagName: descriptor!.colorTag, isDone: descriptor!.isDone)), for: .normal)
+      button.isHidden = !event.isTickable //events that are not tasks have no tick box
+      setStrikethrough(visible: event.isTickable && event.isDone, animated: false)
       
     eventResizeHandles.forEach{
       $0.borderColor = event.color
@@ -155,16 +289,16 @@ open class EventView: UIView {
     }
     context.interpolationQuality = .none
     context.saveGState()
-    context.setStrokeColor(color.cgColor)
-    context.setLineWidth(3)
-    context.translateBy(x: 0, y: 0.5)
+    // Clip the stripe to the rounded shape, since clipsToBounds is off (resize handles sit outside the bounds)
+    let roundedPath = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius)
+    roundedPath.addClip()
+    fillColor.setFill()
+    roundedPath.fill()
+    // Draw the color stripe as a filled bar along the leading edge
     let leftToRight = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .leftToRight
-    let x: CGFloat = leftToRight ? 0 : frame.width - 1  // 1 is the line width
-    let y: CGFloat = 0
-    context.beginPath()
-    context.move(to: CGPoint(x: x, y: y))
-    context.addLine(to: CGPoint(x: x, y: (bounds).height))
-    context.strokePath()
+    let x: CGFloat = leftToRight ? 0 : bounds.width - visibleStripeWidth
+    color.setFill()
+    context.fill(CGRect(x: x, y: 0, width: visibleStripeWidth, height: bounds.height))
     context.restoreGState()
   }
 
@@ -172,19 +306,34 @@ open class EventView: UIView {
 
   override open func layoutSubviews() {
     super.layoutSubviews()
-    textView.frame = {
-        if UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft {
-            return CGRect(x: bounds.minX, y: bounds.minY, width: bounds.width - 3, height: bounds.height)
-        } else {
-            return CGRect(x: bounds.minX + 50, y: bounds.minY, width: bounds.width - 3, height: bounds.height)
-        }
-    }()
+    //button modification
+    //tick button sits after the color stripe, the text follows right next to it
+    let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
+    let buttonSize: CGFloat = 25
+    let buttonLeading = visibleStripeWidth + 8
+    let textSpacing: CGFloat = 8
+    let textTrailingPadding: CGFloat = 6
+    // keep the button near the top for long tasks, centered vertically for short ones
+    let buttonY = min(10, (bounds.height - buttonSize) / 2)
+    let buttonX = rightToLeft ? bounds.width - buttonLeading - buttonSize : buttonLeading
+    button.frame = CGRect(x: buttonX, y: buttonY, width: buttonSize, height: buttonSize)
+
+    // center the first line of text on the button
+    let lineHeight = (textView.font ?? UIFont.systemFont(ofSize: 12)).lineHeight
+    let textY = buttonY + (buttonSize - lineHeight) / 2
+    //without a tick box the text takes its place
+    let textLeading = button.isHidden ? buttonLeading : buttonLeading + buttonSize + textSpacing
+    let textWidth = max(0, bounds.width - textLeading - textTrailingPadding)
+    let textX = rightToLeft ? textTrailingPadding : textLeading
+    textView.frame = CGRect(x: textX, y: textY, width: textWidth, height: bounds.height - textY)
+    textView.textAlignment = rightToLeft ? .right : .left
     if frame.minY < 0 {
       var textFrame = textView.frame;
-      textFrame.origin.y = frame.minY * -1;
+      textFrame.origin.y = textY - frame.minY;
       textFrame.size.height += frame.minY;
       textView.frame = textFrame;
     }
+    updateStrikethroughPath()
     let first = eventResizeHandles.first
     let last = eventResizeHandles.last
     let radius: CGFloat = 40
@@ -196,17 +345,6 @@ open class EventView: UIView {
                           size: size)
     last?.frame = CGRect(origin: CGPoint(x: layoutMargins.left, y: height - yPad - radius),
                          size: size)
-      //added button frame
-      //and button positioning depending of frame (task) size (duration)
-    var buttonHeight : CGFloat
-      if self.frame.height >= 50 {
-          buttonHeight = 10
-      } else {
-          buttonHeight = 0.3*self.frame.height-5
-      }
-      button.frame = CGRect(x: 10, y: buttonHeight, width: 20, height: 20)
-      //addSubview(button)
-      
     if drawsShadow {
       applySketchShadow(alpha: 0.13,
                         blur: 10)

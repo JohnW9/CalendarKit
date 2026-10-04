@@ -41,6 +41,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
   private var pagingViewController = UIPageViewController(transitionStyle: .scroll,
                                                   navigationOrientation: .horizontal,
                                                   options: nil)
+  /// Scroll view used internally by the page view controller to swipe between days
+  private var pagingScrollView: UIScrollView? {
+    pagingViewController.view.subviews.first { $0 is UIScrollView } as? UIScrollView
+  }
   private var style = TimelineStyle()
 
   private lazy var panGestureRecognizer = UIPanGestureRecognizer(target: self,
@@ -54,11 +58,18 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     return true
   }
 
+  /// While an edited event is dragged, the page view controller must not swipe to another day at the same time
+  public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                                shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+    gestureRecognizer == panGestureRecognizer && otherGestureRecognizer.view === pagingScrollView
+  }
+
   public override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
     guard gestureRecognizer == panGestureRecognizer else {
       return super.gestureRecognizerShouldBegin(gestureRecognizer)
     }
-    guard let pendingEvent = editedEventView else {return true}
+    // Nothing to drag, so the pan must fail to let the page view controller swipe between days
+    guard let pendingEvent = editedEventView else {return false}
     let eventFrame = pendingEvent.frame
     let position = panGestureRecognizer.location(in: self)
     let contains = eventFrame.contains(position)
@@ -164,6 +175,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
   }
 
   public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    // other days' timelines also scroll while paging, only the visible one moves the edited event
+    guard scrollView === currentTimeline?.container else {return}
     let offset = scrollView.contentOffset
     let diff = offset.y - initialContentOffset.y
     if let event = editedEventView {
@@ -196,6 +209,15 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     let day = DateInterval(start: date, end: end)
     let validEvents = events.filter{$0.dateInterval.intersects(day)}
     timeline.layoutAttributes = validEvents.map(EventLayoutAttributes.init)
+    timeline.hiddenEvent = editedEventView?.descriptor?.editedEvent
+  }
+
+  /// Hides the original of the event being edited on every timeline, so only its editable copy is shown
+  private func updateHiddenEvent() {
+    let hiddenEvent = editedEventView?.descriptor?.editedEvent
+    pagingViewController.children.forEach { controller in
+      (controller as? TimelineContainerController)?.timeline.hiddenEvent = hiddenEvent
+    }
   }
 
   public func scrollToFirstEventIfNeeded(animated: Bool) {
@@ -231,17 +253,18 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
       }
       
       let timeline = currentTimeline.timeline
-      let offset = currentTimeline.container.contentOffset.y
       // algo needs to be extracted to a separate object
-      let yStart = timeline.dateToY(event.dateInterval.start) - offset
-      let yEnd = timeline.dateToY(event.dateInterval.end) - offset
+      // converted from the timeline, as it is scrolled and sits below the all-day events
+      let yStart = convert(CGPoint(x: 0, y: timeline.dateToY(event.dateInterval.start)), from: timeline).y
+      let yEnd = convert(CGPoint(x: 0, y: timeline.dateToY(event.dateInterval.end)), from: timeline).y
 
         
       let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
-      let x = rightToLeft ? 0 : timeline.style.leadingInset
+      let horizontalInset = timeline.style.eventHorizontalInset
+      let x = (rightToLeft ? 0 : timeline.style.leadingInset) + horizontalInset
       let newRect = CGRect(x: x,
                            y: yStart,
-                           width: timeline.calendarWidth,
+                           width: timeline.calendarWidth - 2 * horizontalInset,
                            height: yEnd - yStart)
       eventView.frame = newRect
         
@@ -251,6 +274,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
       }
     }
     editedEventView = eventView
+    updateHiddenEvent()
     accentDateForEditedEventView()
   }
   
@@ -279,11 +303,70 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
       pendingEvent.frame.origin.y += diff.y
       prevOffset = newCoord
       accentDateForEditedEventView()
+      updateDayChange(for: sender.location(in: self))
     }
 
+    if sender.state == .ended || sender.state == .cancelled || sender.state == .failed {
+      stopDayChange()
+    }
     if sender.state == .ended {
       commitEditing()
     }
+  }
+
+  // MARK: Moving the edited event to another day
+
+  /// Width of the areas at the left and right edges where holding a dragged event moves it to the previous or next day
+  private let dayChangeEdgeWidth: CGFloat = 40
+  private var dayChangeTimer: Timer?
+  /// -1 while the dragged event is held at the edge of the previous day, 1 for the next day, 0 otherwise
+  private var dayChangeDirection = 0
+  private lazy var dayChangeFeedbackGenerator = UISelectionFeedbackGenerator()
+
+  private func updateDayChange(for location: CGPoint) {
+    var direction = 0
+    if location.x < dayChangeEdgeWidth {
+      direction = -1
+    } else if location.x > bounds.width - dayChangeEdgeWidth {
+      direction = 1
+    }
+    if UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft {
+      direction = -direction
+    }
+    guard direction != dayChangeDirection else {return}
+    stopDayChange()
+    dayChangeDirection = direction
+    if direction != 0 {
+      dayChangeFeedbackGenerator.prepare()
+      scheduleDayChange(after: 0.5)
+    }
+  }
+
+  private func scheduleDayChange(after delay: TimeInterval) {
+    dayChangeTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+      self?.moveEditedEventToAdjacentDay()
+    }
+  }
+
+  /// Pages to the previous or next day while the edited event stays under the finger, it is dropped on that day once released
+  private func moveEditedEventToAdjacentDay() {
+    guard editedEventView != nil, dayChangeDirection != 0, let state = state, let currentTimeline = currentTimeline,
+          let newDate = calendar.date(byAdding: .day, value: dayChangeDirection, to: currentTimeline.timeline.date) else {
+      return
+    }
+    currentTimeline.timeline.accentedDate = nil
+    currentTimeline.timeline.setNeedsDisplay()
+    // the new day keeps the same scroll position, so the time under the event doesn't change
+    initialContentOffset = currentTimeline.container.contentOffset
+    dayChangeFeedbackGenerator.selectionChanged()
+    state.move(to: newDate)
+    scheduleDayChange(after: 0.8) // keeps paging while the event is held at the edge
+  }
+
+  private func stopDayChange() {
+    dayChangeTimer?.invalidate()
+    dayChangeTimer = nil
+    dayChangeDirection = 0
   }
   
   @objc func handleResizeHandlePanGesture(_ sender: UIPanGestureRecognizer) {
@@ -349,11 +432,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                           timeline: timeline)
         let snapped = timeline.eventEditingSnappingBehavior.nearestDate(to: ytd)
         let leftToRight = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .leftToRight
-        let x = leftToRight ? style.leadingInset : 0
+        let x = (leftToRight ? style.leadingInset : 0) + style.eventHorizontalInset
         
         var eventFrame = editedEventView.frame
         eventFrame.origin.x = x
-        eventFrame.origin.y = timeline.dateToY(snapped) - currentTimeline.container.contentOffset.y
+        eventFrame.origin.y = convert(CGPoint(x: 0, y: timeline.dateToY(snapped)), from: timeline).y
 
         if resizeHandleTag == 0 {
           eventFrame.size.height = timeline.dateToY(descriptor.dateInterval.end) - timeline.dateToY(snapped)
@@ -394,11 +477,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
 
   /// Ends editing mode
   public func endEventEditing() {
+    stopDayChange()
     prevOffset = .zero
     editedEventView?.eventResizeHandles.forEach{$0.panGestureRecognizer.removeTarget(self, action: nil)}
     editedEventView?.removeFromSuperview()
     editedEventView = nil
     editedEvent = nil
+    updateHiddenEvent()
   }
 
   @objc private func timelineDidLongPress(_ sender: UILongPressGestureRecognizer) {
@@ -433,6 +518,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     let oldDate = oldDate.dateOnly(calendar: calendar)
     let newDate = newDate.dateOnly(calendar: calendar)
     let newController = configureTimelineController(date: newDate)
+    // an edited event is being moved to another day: keep the same scroll position so the time under it doesn't change
+    let isMovingEditedEvent = editedEventView != nil
+    if isMovingEditedEvent {
+      newController.pendingContentOffset = currentTimeline?.container.contentOffset
+    }
 
     delegate?.timelinePager(timelinePager: self, willMoveTo: newDate)
 
@@ -449,7 +539,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                                                       completion: nil)
               
         self.pagingViewController.viewControllers?.first?.view.setNeedsLayout()
-        self.scrollToFirstEventIfNeeded(animated: true)
+        if !isMovingEditedEvent {
+          self.scrollToFirstEventIfNeeded(animated: true)
+        }
         self.delegate?.timelinePager(timelinePager: self, didMoveTo: newDate)
       }
     }

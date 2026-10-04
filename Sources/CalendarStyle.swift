@@ -72,19 +72,24 @@ public struct TimelineStyle {
   public var verticalDiff: CGFloat = 50
   public var verticalInset: CGFloat = 10
   public var leadingInset: CGFloat = 53
-  public var eventGap: CGFloat = 0
+  /// Vertical space left free below each event, so successive events don't touch
+  public var eventGap: CGFloat = 3
+  /// Horizontal space left free on both sides of each event
+  public var eventHorizontalInset: CGFloat = 6
   public init() {}
 }
 
 public struct CurrentTimeIndicatorStyle {
-  public var color = SystemColors.systemRed
+  /// Muted, less saturated red than systemRed
+  public var color = UIColor(red: 0.85, green: 0.38, blue: 0.36, alpha: 1)
+  public var lineWidth: CGFloat = 2
   public var font = UIFont.systemFont(ofSize: 11)
   public var dateStyle : DateStyle = .system
   public init() {}
 }
 
 public struct AllDayViewStyle {
-    public var backgroundColor: UIColor = SystemColors.systemBlue
+  public var backgroundColor: UIColor = .clear
   public var allDayFont = UIFont.systemFont(ofSize: 12.0)
   public var allDayColor: UIColor = SystemColors.label
   public init() {}
