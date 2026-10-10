@@ -136,11 +136,14 @@ open class EventView: UIView {
         let font = textView.font ?? UIFont.systemFont(ofSize: 12)
         let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
         let text = textView.text as NSString? ?? ""
+        // only the name is struck through, not the description below it
+        let nameLength = descriptor.map { ($0.text as NSString).length } ?? text.length
         let path = UIBezierPath()
         let glyphRange = layoutManager.glyphRange(for: textContainer)
         layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { rect, _, _, lineGlyphRange, _ in
             // skip lines that are only whitespace / newlines
             let charRange = layoutManager.characterRange(forGlyphRange: lineGlyphRange, actualGlyphRange: nil)
+            guard charRange.location < nameLength else { return }
             let lineText = text.substring(with: charRange).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !lineText.isEmpty else { return }
             // measure only the visible characters, excluding trailing whitespace
@@ -162,7 +165,7 @@ open class EventView: UIView {
         CATransaction.setDisableActions(true)
         strikethroughLayer.frame = textView.bounds
         strikethroughLayer.path = path.cgPath
-        strikethroughLayer.strokeColor = (textView.textColor ?? SystemColors.label).cgColor
+        strikethroughLayer.strokeColor = (descriptor?.textColor ?? textView.textColor ?? SystemColors.label).cgColor
         CATransaction.commit()
     }
 
@@ -220,8 +223,15 @@ open class EventView: UIView {
   }
 
   public func updateWithDescriptor(event: EventDescriptor) {
+    let notes = event.notes.trimmingCharacters(in: .whitespacesAndNewlines)
     if let attributedText = event.attributedText {
       textView.attributedText = attributedText
+    } else if !notes.isEmpty {
+      // the name keeps the event's font and color, the description follows on the next lines in grey
+      let text = NSMutableAttributedString(string: event.text, attributes: [.font: event.font, .foregroundColor: event.textColor])
+      let notesColor = event.editedEvent != nil ? event.textColor.withAlphaComponent(0.75) : SystemColors.secondaryLabel
+      text.append(NSAttributedString(string: "\n" + notes, attributes: [.font: UIFont.systemFont(ofSize: event.font.pointSize - 1), .foregroundColor: notesColor]))
+      textView.attributedText = text
     } else {
       textView.text = event.text
       textView.textColor = event.textColor
@@ -304,12 +314,40 @@ open class EventView: UIView {
 
   private var drawsShadow = false
 
+  /// Mask fading out the bottom of the text, only used while some of the text doesn't fit in the event
+  private let overflowFadeMask: CAGradientLayer = {
+    let layer = CAGradientLayer()
+    layer.colors = [UIColor.black.cgColor, UIColor.black.cgColor, UIColor.clear.cgColor]
+    return layer
+  }()
+
+  /// Fades out the bottom of the text when it doesn't all fit, so it is clear there is more to see
+  /// by extending or opening the event. The fade goes away as soon as everything fits
+  private func updateOverflowFade() {
+    let layoutManager = textView.layoutManager
+    let textContainer = textView.textContainer
+    layoutManager.ensureLayout(for: textContainer)
+    let height = textView.bounds.height
+    let overflows = layoutManager.usedRect(for: textContainer).maxY > height + 0.5
+    guard overflows, height > 0 else {
+      textView.layer.mask = nil
+      return
+    }
+    let fadeHeight = min(14, height / 2)
+    CATransaction.begin()
+    CATransaction.setDisableActions(true) // follows the event's size right away while resizing
+    overflowFadeMask.frame = textView.bounds
+    overflowFadeMask.locations = [0, NSNumber(value: Double((height - fadeHeight) / height)), 1]
+    CATransaction.commit()
+    textView.layer.mask = overflowFadeMask
+  }
+
   override open func layoutSubviews() {
     super.layoutSubviews()
     //button modification
     //tick button sits after the color stripe, the text follows right next to it
     let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
-    let buttonSize: CGFloat = 25
+    let buttonSize: CGFloat = 20 //small enough to sit naturally in a 30 minute event
     let buttonLeading = visibleStripeWidth + 8
     let textSpacing: CGFloat = 8
     let textTrailingPadding: CGFloat = 6
@@ -333,6 +371,7 @@ open class EventView: UIView {
       textFrame.size.height += frame.minY;
       textView.frame = textFrame;
     }
+    updateOverflowFade()
     updateStrikethroughPath()
     let first = eventResizeHandles.first
     let last = eventResizeHandles.last

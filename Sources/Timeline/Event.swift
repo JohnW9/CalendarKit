@@ -4,6 +4,7 @@ public final class Event: EventDescriptor {
   public var dateInterval = DateInterval()
   public var isAllDay = false
   public var text = ""
+  public var notes = "" //description of the task, shown in grey below its name
   public var attributedText: NSAttributedString?
   public var lineBreakMode: NSLineBreakMode?
     //button modification
@@ -35,6 +36,7 @@ public final class Event: EventDescriptor {
     cloned.dateInterval = dateInterval
     cloned.isAllDay = isAllDay
     cloned.text = text
+    cloned.notes = notes
     cloned.attributedText = attributedText
     cloned.lineBreakMode = lineBreakMode
     cloned.color = color

@@ -17,6 +17,10 @@ func tagToTickImage(tagName :String, isDone: Bool) -> String {
                 return K.TickEmpty.Purple
             case K.TagColors.Red:
                 return K.TickEmpty.Red
+            case K.TagColors.Orange:
+                return K.TickEmpty.Orange
+            case K.TagColors.Yellow:
+                return K.TickEmpty.Yellow
             default:
                 return K.TickEmpty.Blue
         }
@@ -28,6 +32,10 @@ func tagToTickImage(tagName :String, isDone: Bool) -> String {
                     return K.TickFilled.Purple
                 case K.TagColors.Red:
                     return K.TickFilled.Red
+                case K.TagColors.Orange:
+                    return K.TickFilled.Orange
+                case K.TagColors.Yellow:
+                    return K.TickFilled.Yellow
                 default:
                     return K.TickFilled.Blue
             }
@@ -43,6 +51,10 @@ func tagToHex(tagName: String) -> Int {
             return K.Colors.purple
         case K.TagColors.Red:
             return K.Colors.red
+        case K.TagColors.Orange:
+            return K.Colors.orange
+        case K.TagColors.Yellow:
+            return K.Colors.yellow
         default:
             return K.Colors.blue
     }
@@ -60,6 +72,10 @@ func colorToTickImage(color: UIColor, isDone: Bool) -> String {
             return K.TickEmpty.Purple
         case .systemRed:
             return K.TickEmpty.Red
+        case .systemOrange:
+            return K.TickEmpty.Orange
+        case .systemYellow:
+            return K.TickEmpty.Yellow
         default:
             return K.TickEmpty.Blue
         }
@@ -71,6 +87,10 @@ func colorToTickImage(color: UIColor, isDone: Bool) -> String {
                     return K.TickFilled.Purple
                 case .systemRed:
                     return K.TickFilled.Red
+                case .systemOrange:
+                    return K.TickFilled.Orange
+                case .systemYellow:
+                    return K.TickFilled.Yellow
                 default:
                     return K.TickFilled.Blue
         }

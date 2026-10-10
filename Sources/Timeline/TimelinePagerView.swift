@@ -183,8 +183,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
       var frame = event.frame
       frame.origin.y -= diff
       event.frame = frame
-      initialContentOffset = offset
     }
+    // always tracked, not only while editing: programmatic scrolls (scrollTo, auto-scroll, safe area changes)
+    // don't call scrollViewWillBeginDragging, and a stale offset would make the next edited event jump
+    initialContentOffset = offset
   }
 
   public func reloadData() {
@@ -267,7 +269,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                            width: timeline.calendarWidth - 2 * horizontalInset,
                            height: yEnd - yStart)
       eventView.frame = newRect
-        
+      // the edited event follows scrolling from this offset on
+      initialContentOffset = currentTimeline.container.contentOffset
+
 
       if animated {
         eventView.animateCreation()
@@ -420,7 +424,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     if let currentTimeline = currentTimeline {
       let timeline = currentTimeline.timeline
       timeline.accentedDate = nil
-      setNeedsDisplay()
+      timeline.setNeedsDisplay() // the accented time is drawn by the timeline, not by the pager
 
       // TODO: Animate cancellation
 
@@ -484,6 +488,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     editedEventView = nil
     editedEvent = nil
     updateHiddenEvent()
+    // create(event:) accents the edited event's start time, it must not stay once editing is over
+    if let timeline = currentTimeline?.timeline {
+      timeline.accentedDate = nil
+      timeline.setNeedsDisplay()
+    }
   }
 
   @objc private func timelineDidLongPress(_ sender: UILongPressGestureRecognizer) {
