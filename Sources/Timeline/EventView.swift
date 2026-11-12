@@ -156,8 +156,12 @@ open class EventView: UIView {
             let y = baseline - font.xHeight / 2
             // ignore lines that are cut off by the bottom of the event
             guard y < self.textView.bounds.height else { return }
-            let startX = rightToLeft ? usedRect.maxX : usedRect.minX
-            let endX = rightToLeft ? usedRect.minX : usedRect.maxX
+            // a line truncated with "…" is measured on its whole text, so the line is kept within the text's width
+            let textWidth = self.textView.bounds.width
+            let minX = usedRect.minX.clamped(to: 0...textWidth)
+            let maxX = usedRect.maxX.clamped(to: 0...textWidth)
+            let startX = rightToLeft ? maxX : minX
+            let endX = rightToLeft ? minX : maxX
             path.move(to: CGPoint(x: startX, y: y))
             path.addLine(to: CGPoint(x: endX, y: y))
         }
@@ -165,7 +169,7 @@ open class EventView: UIView {
         CATransaction.setDisableActions(true)
         strikethroughLayer.frame = textView.bounds
         strikethroughLayer.path = path.cgPath
-        strikethroughLayer.strokeColor = (descriptor?.textColor ?? textView.textColor ?? SystemColors.label).cgColor
+        strikethroughLayer.strokeColor = (descriptor?.textColor ?? textView.textColor ?? SystemColors.label).resolvedColor(with: traitCollection).cgColor
         CATransaction.commit()
     }
 
@@ -219,6 +223,12 @@ open class EventView: UIView {
     for (idx, handle) in eventResizeHandles.enumerated() {
       handle.tag = idx
       addSubview(handle)
+    }
+    // the strikethrough's CGColor is fixed when set, so it is set again when switching between light and dark mode
+    if #available(iOS 17.0, *) {
+      registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _: UITraitCollection) in
+        self.updateStrikethroughPath()
+      }
     }
   }
 
@@ -302,6 +312,10 @@ open class EventView: UIView {
     // Clip the stripe to the rounded shape, since clipsToBounds is off (resize handles sit outside the bounds)
     let roundedPath = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius)
     roundedPath.addClip()
+    if let baseFillColor = baseFillColor {
+      baseFillColor.setFill()
+      roundedPath.fill()
+    }
     fillColor.setFill()
     roundedPath.fill()
     // Draw the color stripe as a filled bar along the leading edge
@@ -310,6 +324,26 @@ open class EventView: UIView {
     color.setFill()
     context.fill(CGRect(x: x, y: 0, width: visibleStripeWidth, height: bounds.height))
     context.restoreGState()
+  }
+
+  /// Painted below the event's translucent background, so an event drawn over another one doesn't blend with it
+  public var baseFillColor: UIColor? {
+    didSet {
+      if baseFillColor != oldValue {
+        setNeedsDisplay()
+      }
+    }
+  }
+
+  /// Bottom of the text and tick box, in the event's own coordinates: what another event drawn over this one
+  /// must stay below to leave them visible
+  public var contentBottom: CGFloat {
+    layoutIfNeeded()
+    let layoutManager = textView.layoutManager
+    layoutManager.ensureLayout(for: textView.textContainer)
+    let usedHeight = layoutManager.usedRect(for: textView.textContainer).maxY
+    let textBottom = textView.frame.minY + min(usedHeight, textView.bounds.height)
+    return button.isHidden ? textBottom : max(textBottom, button.frame.maxY)
   }
 
   private var drawsShadow = false
@@ -342,8 +376,55 @@ open class EventView: UIView {
     textView.layer.mask = overflowFadeMask
   }
 
+  /// While the event's size is animated, its drawing is stretched to the new size: only its middle is stretched,
+  /// so the rounded corners and the color stripe keep their shape
+  private func updateStretchableArea() {
+    let insetX = max(cornerRadius, visibleStripeWidth) + 1
+    let insetY = cornerRadius + 1
+    var center = CGRect(x: 0, y: 0, width: 1, height: 1)
+    if bounds.width > 2 * insetX, bounds.height > 2 * insetY {
+      center = CGRect(x: insetX / bounds.width,
+                      y: insetY / bounds.height,
+                      width: 1 - 2 * insetX / bounds.width,
+                      height: 1 - 2 * insetY / bounds.height)
+    }
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    layer.contentsCenter = center
+    CATransaction.commit()
+  }
+
+  /// Below this width, the text is shown below the tick box rather than next to it
+  private let minimumTextWidthNextToButton: CGFloat = 30
+  /// Width of the longest word of the text, measured once per text
+  private var longestWordWidth: (text: NSAttributedString, width: CGFloat)?
+
+  /// A word wider than the event would be broken after nearly every letter: the text is then kept on a single line
+  /// ending with "…" instead, so the event stays readable
+  private func updateTruncation() {
+    let text = textView.attributedText ?? NSAttributedString()
+    if longestWordWidth?.text != text {
+      var width: CGFloat = 0
+      let string = text.string as NSString
+      string.enumerateSubstrings(in: NSRange(location: 0, length: string.length), options: .byWords) { _, range, _, _ in
+        width = max(width, text.attributedSubstring(from: range).size().width)
+      }
+      longestWordWidth = (text, ceil(width))
+    }
+    let wordsFit = (longestWordWidth?.width ?? 0) <= textView.bounds.width
+    let textContainer = textView.textContainer
+    let maximumNumberOfLines = wordsFit ? 0 : 1
+    let lineBreakMode: NSLineBreakMode = wordsFit ? (descriptor?.lineBreakMode ?? .byWordWrapping) : .byTruncatingTail
+    if textContainer.maximumNumberOfLines != maximumNumberOfLines || textContainer.lineBreakMode != lineBreakMode {
+      textContainer.maximumNumberOfLines = maximumNumberOfLines
+      textContainer.lineBreakMode = lineBreakMode
+      textView.layoutManager.textContainerChangedGeometry(textContainer)
+    }
+  }
+
   override open func layoutSubviews() {
     super.layoutSubviews()
+    updateStretchableArea()
     //button modification
     //tick button sits after the color stripe, the text follows right next to it
     let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
@@ -358,10 +439,17 @@ open class EventView: UIView {
 
     // center the first line of text on the button
     let lineHeight = (textView.font ?? UIFont.systemFont(ofSize: 12)).lineHeight
-    let textY = buttonY + (buttonSize - lineHeight) / 2
+    var textY = buttonY + (buttonSize - lineHeight) / 2
     //without a tick box the text takes its place
-    let textLeading = button.isHidden ? buttonLeading : buttonLeading + buttonSize + textSpacing
-    let textWidth = max(0, bounds.width - textLeading - textTrailingPadding)
+    var textLeading = button.isHidden ? buttonLeading : buttonLeading + buttonSize + textSpacing
+    var textWidth = max(0, bounds.width - textLeading - textTrailingPadding)
+    // in a narrow event (e.g. among many concurrent ones) there is hardly any room next to the tick box:
+    // the text goes below it instead, using the whole width
+    if !button.isHidden, textWidth < minimumTextWidthNextToButton {
+      textY = buttonY + buttonSize + 2
+      textLeading = buttonLeading
+      textWidth = max(0, bounds.width - textLeading - textTrailingPadding)
+    }
     let textX = rightToLeft ? textTrailingPadding : textLeading
     textView.frame = CGRect(x: textX, y: textY, width: textWidth, height: bounds.height - textY)
     textView.textAlignment = rightToLeft ? .right : .left
@@ -371,6 +459,11 @@ open class EventView: UIView {
       textFrame.size.height += frame.minY;
       textView.frame = textFrame;
     }
+    // the text view only resizes its text container in its own layout pass, after this one: without this, the
+    // strikethrough and the fade below would be measured on the text laid out for the previous width
+    // (e.g. the line sticking out of an event that just got narrower while being dragged among other events)
+    textView.textContainer.size.width = textView.bounds.width
+    updateTruncation()
     updateOverflowFade()
     updateStrikethroughPath()
     let first = eventResizeHandles.first

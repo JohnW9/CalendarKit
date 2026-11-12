@@ -13,7 +13,9 @@ public final class Event: EventDescriptor {
   public var isTickable = true //false hides the tick box, for events that are not tasks (e.g. imported from Apple Calendar)
   public var showsStripe = true //false hides the color stripe along the leading edge (e.g. imported from Apple Calendar)
     public var id = -1 //the id is used to identify the task in C.calTaskList. It is the ith element in the C.calTaskList array
-    
+  public var columnOrder = 0 //position among concurrent events, events with the same value are ordered by start time
+  public var seriesID: UUID? //the recurring series the event is an occurrence of, nil for a one-off event
+
   public var color = SystemColors.systemBlue {
     didSet {
       updateColors()
@@ -50,12 +52,15 @@ public final class Event: EventDescriptor {
       cloned.showsStripe = showsStripe
       cloned.colorTag = colorTag //keeps the tick box color while the event is selected/edited
       cloned.id = id
+      cloned.columnOrder = columnOrder
+      cloned.seriesID = seriesID
     return cloned
   }
 
   public func commitEditing() {
     guard let edited = editedEvent else {return}
     edited.dateInterval = dateInterval
+    edited.columnOrder = columnOrder
   }
 
   private func updateColors() {
@@ -81,10 +86,12 @@ public final class Event: EventDescriptor {
     return dynamicColor(light: light, dark: dark)
   }
   
-  /// Dynamic color that changes depending on the user interface style (dark / light)
+  /// Dark tinted text in light mode, white in dark mode so it stays readable on the near black background
   private func dynamicStandardTextColor() -> UIColor {
     let light = textColorForLightTheme(baseColor: color)
-    return dynamicColor(light: light, dark: color)
+    return UIColor { traitCollection in
+      traitCollection.userInterfaceStyle == .dark ? .white : light
+    }
   }
   
   private func textColorForLightTheme(baseColor: UIColor) -> UIColor {
@@ -109,7 +116,7 @@ public final class Event: EventDescriptor {
         let interfaceStyle = traitCollection.userInterfaceStyle
         switch interfaceStyle {
         case .dark:
-          return light
+          return dark
         default:
           return light
         }
